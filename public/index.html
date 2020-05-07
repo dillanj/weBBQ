@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>BBQ Title</title>
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+JP:300,400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="animations.css">
+  </head>
+  <body>
+    <div id="VUEapp">
+        <div class="modalContainer" v-if="showModal">
+            <!-- SIGN IN MODAL -->
+            <div class="modalForm" v-if="showSignInForm">
+                <div id="modalExitContainer"><span v-on:click="exitModalClicked">&times;</span></div>
+                <div class="modalFormItem" id=emailContainer><input type="email" placeholder="Email" v-model="authorizeUserData.emailInput"></div>
+                <div class="modalFormItem" id="passwordContainer"><input type="password" placeholder="Password" v-model="authorizeUserData.plainPasswordInput"></div>
+                <div class="modalFormItem" id="signInContainer"><span v-on:click="navRegisterClicked">No Account?<br>Register Here</span><button class="button" v-on:click="authenticateUser">Sign In</button> </div>
+                <div id="valErrors" v-if="showErrors">
+                    <p>You Must Fix These Errors To Sign In</p>
+                    <ul>
+                        <li v-for="err in validationErrors">{{err}}</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- REGISTER MODAL -->
+            <div class="modalForm" v-if="showRegisterForm">
+                <div id="modalExitContainer"><span v-on:click="exitModalClicked">&times;</span></div>
+                <div class="modalFormItem" id="nameContainer"><input type="text" placeholder="First Name" v-model="newUserData.firstNameInput"> <input type="text" placeholder="Last Name" v-model="newUserData.lastNameInput"></div>
+                <div class="modalFormItem" id=emailContainer><input type="email" placeholder="Email" v-model="newUserData.emailInput"></div>
+                <div class="modalFormItem" id="passwordContainer"><input placeholder="Password" type="password" v-model="newUserData.plainPasswordInput"></div>
+                <div class="modalFormItem" id="signInContainer"><span v-on:click="navSignInClicked">Already a User?<br>Sign In.</span><button class="button" v-on:click="createUser">Register</button> </div>
+                <div id="valErrors" v-if="showErrors">
+                    <p>You Must Fix These Errors To Create An Account or Recipe</p>
+                    <ul>
+                        <li v-for="err in validationErrors">{{err}}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <header>
+            <div id="navBar">
+                <nav>
+                    <div id="navLeftSide"><a href="index.html"><img id="navLogo" src="images/logo_white.svg"/></a></div>
+                    <div id="navRightSide">
+                        <ul>
+                            <li v-on:click="navRecipesClicked">Recipes</a></li>
+                            <li v-if="currentUserData.loggedIn" v-on:click="navSignOutClicked"><p>{{currentUserData.firstName}}</p>Sign Out</li>
+                            <li v-else v-on:click="navSignInClicked">Sign In</li>
+                            
+                        </ul>  
+                    </div>
+                </nav>
+            </div>
+            <h1 class="featuredText">Featured Content Coming Soon</h1>
+        </header>
+
+    <!-- end of header-->
+
+    <!-- start of app -->
+        <div id="app">
+
+            <!-- start of allRecipesApp -->
+            <div id="allRecipesApp" v-if="showAllRecipes" class="slideInRight">
+                <div class="subnav">
+                    <h1 class="headingText">Recipes</h1>
+                    <div id="categoryFilterContainer">
+                        <select class="button" id="categoryFilter" v-model="allRecipesData.categoryFilter">
+                            <option value="" disabled selected>Category</option>
+                            <option value="chicken">Chicken</option>
+                            <option value="beef">Beef</option>
+                            <option value="pork">Pork</option>
+                            <option value="seafood">Seafood</option>
+                            <option value="vegetables">Vegetables</option>
+                            <option value="casserole">Casserole</option>
+                            <option value="dessert">Dessert</option>
+                        </select>
+                        <button class="button" v-on:click="searchByCategory(allRecipesData.categoryFilter)">Go</button>
+                    </div>
+                    <button id="newRecipeButton" class="button" v-on:click="createRecipe">New</button>
+                </div> 
+                <!-- end ofsubnav -->
+
+
+                <div id="allRecipesContainer">
+                <div class="recipeCard" v-for="recipe in allRecipesData.recipes" v-on:click="getRecipe(recipe)">
+                    <div id="cardTop">
+                        <img v-if="recipe.category === 'pork'" src="images/pork.jpg">
+                        <img v-if="recipe.category === 'chicken'" src="images/bbq_chicken2.jpg">
+                        <img v-if="recipe.category === 'beef'" src="images/beef.jpg">
+                        <img v-if="recipe.category === 'seafood'" src="images/seafood.jpg">
+                        <img v-if="recipe.category === 'vegetables'" src="images/vegetables.jpg">
+                        <img v-if="recipe.category === 'casserole'" src="images/casserole.jpg">
+                        <img v-if="recipe.category === 'dessert'" src="images/dessert.jpg">
+                    </div>
+                    <div id="cardBottom">
+                        <h3 id="cardTitle">{{recipe.name}}</h3>
+                        <div id="cardDescription">{{recipe.description}}</div>
+                        <div id="cardTime" v-if="recipe.times">{{recipe.times.cook}}</div>
+                    </div>
+                </div>
+                    
+                </div>
+            </div>
+            <!-- end of allRecipesApp-->
+
+
+            <!-- newRecipeApp -->
+            <div id="newRecipeApp" v-if="showNewRecipeForm" class="slideInRight">
+                <div id="valErrors" v-if="showErrors">
+                    <p>You Must Fix These Errors To Create a New Recipe</p>
+                    <ul>
+                        <li v-for="err in validationErrors">{{err}}</li>
+                    </ul>
+                </div>
+                <h1 class="headingText">New Recipe</h1>
+                <div class="nameContainer"><label>Recipe Name</label><br><input class="nameInput" placeholder="Recipe" type="text" v-model="newRecipeData.nameInput"></div>
+
+                <div class="timeContainer"><label>Time</label><br><input placeholder="prep" type="text" v-model="newRecipeData.prepTimeInput"><input placeholder="cook" type="text" v-model="newRecipeData.cookTimeInput"></div>
+
+                <div class="categoryContainer">
+                    <label>Category</label><br>
+                    <select class="button" id="categoryInput" v-model="newRecipeData.categoryInput">
+                        <option value="" disabled selected>Select</option>
+                        <option value="chicken">Chicken</option>
+                        <option value="beef">Beef</option>
+                        <option value="pork">Pork</option>
+                        <option value="seafood">Seafood</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="casserole">Casserole</option>
+                        <option value="dessert">Dessert</option>
+                    </select>
+                </div>
+
+                <div class="imageUploadContainer"><label>Image</label><br><button class="button">Upload</button></div>
+
+                <div class="descriptionContainer"><label>Description</label><br><textarea placeholder="Describe The Recipe" v-model="newRecipeData.descriptionInput"></textarea></div>
+
+                <div class="directionsContainer"><label>Step {{newRecipeData.localDirections.length + 1}}</label><br><textarea placeholder="Description" v-model="newRecipeData.directionInput"></textarea><br><button v-on:click="addDirectionButtonClicked" class="button">Add</button></div>
+
+                <div class="ingredientsContainer"><label>Ingredients</label><br><input type="text" v-model="newRecipeData.measurementInput" placeholder="measurement"><input type="text" v-model="newRecipeData.ingredientInput" placeholder="ingredient"><button v-on:click="addIngredientButtonClicked" class="button">Add</button></div>
+
+                <div class="listBox ingredientsBox">
+                    <h4 class="headingText">Ingredients</h4>
+                    <div class="ingredientsList">
+                        <ul>
+                            <li v-for="(ingredient, index) in newRecipeData.ingredients">
+                                <div class="listItem">
+                                    <p style="color: black">{{ ingredient.measurement + " " + ingredient.ingredient }}</p>
+                                    <div v-on:click="deleteIngredient(index)">Delete</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="listBox directionsBox">
+                    <h4 class="headingText">Directions</h4>
+                    <div class="directionsList">
+                        <ol>
+                            <li v-for="(step, index) in newRecipeData.directions">
+                                <div class="listItem">
+                                    <p style="color: black">{{ step }}</p>
+                                    <div v-on:click="deleteDirection(index)">Delete</div>
+                                </div>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="submitContainer"><button v-on:click="createRecipeButtonClicked" class="button">Create</button></div>
+            </div> <!-- end of newRecipeApp -->
+
+            <!-- Start of showRecipeApp -->
+            <div id="showRecipeApp" v-if="showRecipe" class="slideInRight">
+                <div class="subnav">
+                    <h1 class="headingText">{{recipeData.recipe.name}}</h1>
+                    <div>
+                        <button class="button" v-on:click="editRecipe(recipeData.recipe)" v-if="recipeData.isOwner">Edit</button>
+                        <button class="button" v-on:click="deleteRecipe(recipeData.recipe)" v-if="recipeData.isOwner">Delete</button>
+                    </div>
+                </div>
+
+                <div id="recipeContainer">
+
+                    <div id="recipeDirsBox" class="listBox">
+                        <h4 class="headingText">Directions</h4>
+                        <div class="directionsList" id="recipeDirsList">
+                            <ol>
+                                <li v-for="step in recipeData.recipe.directions">
+                                    <div>
+                                        <p style="color: black">{{step}}</p>
+                                    </div>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div id="recipeIngredientsBox" class="listBox">
+                        <h4 class="headingText">Ingredients</h4>
+                        <div class="ingredientsList" id="recipeIngredientsList">
+                            <ul>
+                                <li v-for="ingredient in recipeData.recipe.ingredients">
+                                    <div>
+                                        <p style="color: black">{{ingredient.measurement + " " + ingredient.ingredient}}</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="recipeImageContainer">
+                        <img v-if="recipeData.recipe.category === 'pork'" src="images/pork.jpg">
+                        <img v-if="recipeData.recipe.category === 'chicken'" src="images/bbq_chicken2.jpg">
+                        <img v-if="recipeData.recipe.category === 'beef'" src="images/beef.jpg">
+                        <img v-if="recipeData.recipe.category === 'seafood'" src="images/seafood.jpg">
+                        <img v-if="recipeData.recipe.category === 'vegetables'" src="images/vegetables.jpg">
+                        <img v-if="recipeData.recipe.category === 'casserole'" src="images/casserole.jpg">
+                        <img v-if="recipeData.recipe.category === 'dessert'" src="images/dessert.jpg">
+                    </div>
+
+                    <div id="recipeDescriptionContainer">
+                        <h4 class="headingText">Description</h4>
+                        <p>{{recipeData.recipe.description}}</p>
+                    </div>
+                
+                    
+                </div>
+            </div> <!-- end of showRecipeApp --> 
+
+            <!-- EditRecipeApp -->
+            <div id="editRecipeApp" v-if="showEditRecipeForm" class="slideInRight">
+                <div id="valErrors" v-if="showErrors">
+                    <p>You Must Fix These Errors To Create a New Recipe</p>
+                    <ul>
+                        <li v-for="err in validationErrors">{{err}}</li>
+                    </ul>
+                </div>
+            <h1 class="headingText">Edit Recipe</h1>
+            <div class="nameContainer"><label>Recipe Name</label><br><input class="nameInput" placeholder="recipe name" type="text" v-model="newRecipeData.nameInput"></div>
+
+            <div class="timeContainer"><label>Time</label><br><input placeholder="prep" type="text" v-model="newRecipeData.prepTimeInput"><input placeholder="cook" type="text" v-model="newRecipeData.cookTimeInput"></div>
+
+            <div class="categoryContainer">
+                <label>Category</label><br>
+                <select class="button" class="categoryInput" v-model="newRecipeData.categoryInput">
+                    <option value="" disabled selected>Select</option>
+                    <option value="chicken">Chicken</option>
+                    <option value="beef">Beef</option>
+                    <option value="pork">Pork</option>
+                    <option value="seafood">Seafood</option>
+                    <option value="vegetables">Vegetables</option>
+                    <option value="casserole">Casserole</option>
+                    <option value="dessert">Dessert</option>
+                </select>
+            </div>
+
+            <div class="imageUploadContainer"><label>Image</label><br><button class="button">Upload</button></div>
+
+            <div class="descriptionContainer"><label>Description</label><br><textarea placeholder="Describe The Recipe" v-model="newRecipeData.descriptionInput"></textarea></div>
+
+            <div class="directionsContainer"><label>Step {{newRecipeData.localDirections.length + 1}}</label><br><textarea placeholder="Description" v-model="newRecipeData.directionInput"></textarea><br><button v-on:click="addDirectionButtonClicked" class="button">Add</button></div>
+
+            <div class="ingredientsContainer"><label>Ingredients</label><br><input type="text" v-model="newRecipeData.measurementInput" placeholder="measurement"><input type="text" v-model="newRecipeData.ingredientInput" placeholder="ingredient"><button v-on:click="addIngredientButtonClicked" class="button">Add</button></div>
+
+            <div class="listBox ingredientsBox">
+                <h4 class="headingText">Ingredients</h4>
+                <div class="ingredientsList">
+                    <ul>
+                        <li v-for="(ingredient,index) in newRecipeData.localIngredients">
+                            <div class="listItem">
+                                <p style="color: black">{{ ingredient.measurement + " " + ingredient.ingredient }}</p>
+                                <div v-on:click="deleteIngredient(index)">Delete</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="listBox directionsBox">
+                <h4 class="headingText">Directions</h4>
+                <div class="directionsList">
+                    <ol>
+                        <li v-for="(step, index) in newRecipeData.localDirections">
+                            <div class="listItem">
+                                <p style="color: black">{{ step }}</p>
+                                <div v-on:click="deleteDirection(index)">Delete</div>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="submitContainer"><button v-on:click="editCompleteButtonClicked(recipeData.recipe._id)" class="button">Done</button></div>
+        </div> <!-- end of newRecipeApp -->
+        <footer></footer>
+
+    </div> <!-- end of app --> 
+        
+</div><!-- end of VUE app --> 
+    
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

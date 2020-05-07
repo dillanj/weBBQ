@@ -1,0 +1,31 @@
+{
+  "name": "bbq",
+  "version": "1.0.0",
+  "description": "Midterm Project",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dsu-cit-csweb4200/s20-project1-dillanj.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dsu-cit-csweb4200/s20-project1-dillanj/issues"
+  },
+  "homepage": "https://github.com/dsu-cit-csweb4200/s20-project1-dillanj#readme",
+  "dependencies": {
+    "bcrypt": "^4.0.1",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-session": "^1.17.0",
+    "mongoose": "^5.9.3",
+    "passport": "^0.4.1",
+    "passport-local": "^1.0.0",
+    "vue": "^2.6.11"
+  }
+}
